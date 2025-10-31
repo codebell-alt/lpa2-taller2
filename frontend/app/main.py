@@ -60,25 +60,50 @@ def generar_pdf():
 
         # Crear buffer para PDF
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        
+        # Configurar documento con márgenes apropiados
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=A4,
+            rightMargin=50,
+            leftMargin=50,
+            topMargin=50,
+            bottomMargin=50
+        )
         elements = []
 
         # Estilos
         styles = getSampleStyleSheet()
+        
         title_style = ParagraphStyle(
             "CustomTitle",
             parent=styles["Heading1"],
-            fontSize=18,
-            spaceAfter=30,
+            fontSize=20,
+            spaceAfter=20,
+            spaceBefore=10,
             alignment=1,  # Centro
+            textColor=colors.darkblue
+        )
+        
+        section_style = ParagraphStyle(
+            "SectionStyle",
+            parent=styles["Heading2"],
+            fontSize=14,
+            spaceAfter=12,
+            spaceBefore=20,
+            textColor=colors.darkblue
         )
 
-        # Título
+        # Título principal
         titulo = Paragraph(f"FACTURA {factura['numero_factura']}", title_style)
         elements.append(titulo)
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 30))
 
-        # Información de la factura
+        # Sección información del cliente
+        info_titulo = Paragraph("Información del Cliente", section_style)
+        elements.append(info_titulo)
+        
+        # Información de la factura con anchos específicos
         info_data = [
             ["Fecha:", factura["fecha_emision"]],
             ["Cliente:", factura["cliente_nombre"]],
@@ -88,72 +113,142 @@ def generar_pdf():
             ["Ciudad:", factura["cliente_ciudad"]],
         ]
 
-        info_table = Table(info_data)
+        # Tabla de información con anchos definidos
+        info_table = Table(info_data, colWidths=[120, 300])
         info_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (0, -1), colors.grey),
-                    ("TEXTCOLOR", (0, 0), (0, -1), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                    ("BACKGROUND", (0, 0), (0, -1), colors.lightblue),
+                    ("TEXTCOLOR", (0, 0), (0, -1), colors.darkblue),
+                    ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                    ("ALIGN", (1, 0), (1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                    ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 11),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                 ]
             )
         )
         elements.append(info_table)
         elements.append(Spacer(1, 30))
 
-        # Detalle de items
-        detalle_data = [["Descripción", "Cantidad", "Precio Unit.", "Subtotal"]]
+        # Sección detalle de productos/servicios
+        detalle_titulo = Paragraph("Detalle de Productos/Servicios", section_style)
+        elements.append(detalle_titulo)
+
+        # Detalle de items con anchos específicos
+        detalle_data = [["Descripción", "Cant.", "Precio Unitario", "Subtotal"]]
         for item in factura["items"]:
+            # Truncar descripción si es muy larga
+            descripcion = item["descripcion"]
+            if len(descripcion) > 40:
+                descripcion = descripcion[:37] + "..."
+                
             detalle_data.append(
                 [
-                    item["descripcion"],
+                    descripcion,
                     str(item["cantidad"]),
-                    f"${item['precio_unitario']:,.2f} COP",
-                    f"${item['subtotal']:,.2f} COP",
+                    f"${item['precio_unitario']:,.0f} COP",
+                    f"${item['subtotal']:,.0f} COP",
                 ]
             )
 
-        detalle_table = Table(detalle_data)
+        # Tabla de detalles con anchos específicos
+        detalle_table = Table(detalle_data, colWidths=[200, 50, 100, 120])
         detalle_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                    ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                    ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 9),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ("FONTSIZE", (0, 0), (-1, 0), 11),
+                    ("FONTSIZE", (0, 1), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
                 ]
             )
         )
         elements.append(detalle_table)
         elements.append(Spacer(1, 30))
 
-        # Totales
+        # Sección totales
+        totales_titulo = Paragraph("Resumen de Totales", section_style)
+        elements.append(totales_titulo)
+
+        # Totales con formato mejorado
         totales_data = [
-            ["Subtotal:", f"${factura['subtotal']:,.2f} COP"],
-            ["IVA (19%):", f"${factura['iva']:,.2f} COP"],
-            ["TOTAL:", f"${factura['total']:,.2f} COP"],
+            ["Subtotal:", f"${factura['subtotal']:,.0f} COP"],
+            ["IVA (19%):", f"${factura['iva']:,.0f} COP"],
+            ["", ""],  # Línea separadora
+            ["TOTAL:", f"${factura['total']:,.0f} COP"],
         ]
 
-        totales_table = Table(totales_data, colWidths=[100, 80])
+        totales_table = Table(totales_data, colWidths=[150, 120])
         totales_table.setStyle(
             TableStyle(
                 [
                     ("ALIGN", (0, 0), (-1, -1), "RIGHT"),
-                    ("FONTNAME", (0, 0), (-1, 1), "Helvetica"),
-                    ("FONTNAME", (0, 2), (-1, 2), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 12),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                    ("FONTNAME", (0, 0), (-1, 2), "Helvetica"),
+                    ("FONTNAME", (0, 3), (-1, 3), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, 2), 12),
+                    ("FONTSIZE", (0, 3), (-1, 3), 14),
+                    ("TEXTCOLOR", (0, 3), (-1, 3), colors.darkblue),
+                    ("BACKGROUND", (0, 3), (-1, 3), colors.lightblue),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LINEABOVE", (0, 2), (-1, 2), 1, colors.grey),
+                    ("LINEABOVE", (0, 3), (-1, 3), 2, colors.darkblue),
+                    ("SPAN", (0, 2), (-1, 2)),  # Línea separadora
                 ]
             )
         )
-        elements.append(totales_table)
+        
+        # Alinear totales a la derecha
+        elements.append(Spacer(1, 20))
+        
+        # Crear tabla contenedora para alinear totales a la derecha
+        container_data = [["", totales_table]]
+        container_table = Table(container_data, colWidths=[200, 270])
+        container_table.setStyle(
+            TableStyle([
+                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ])
+        )
+        
+        elements.append(container_table)
+
+        # Pie de página
+        elements.append(Spacer(1, 40))
+        footer_style = ParagraphStyle(
+            "FooterStyle",
+            parent=styles["Normal"],
+            fontSize=9,
+            alignment=1,  # Centro
+            textColor=colors.grey
+        )
+        footer = Paragraph(
+            "Gracias por su preferencia - Este documento es válido como factura electrónica",
+            footer_style
+        )
+        elements.append(footer)
 
         # Generar PDF
         doc.build(elements)

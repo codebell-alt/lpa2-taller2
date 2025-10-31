@@ -1,4 +1,4 @@
-# 🧾 Generador de Facturas
+# Generador de Facturas
 
 Sistema completo de generación de facturas profesionales con datos sintéticos. Utiliza **FastAPI** para el backend con datos generados por **Faker**, y un frontend moderno en **Flask** con **Tailwind CSS** que genera PDFs de alta calidad con **ReportLab**.
 
@@ -10,11 +10,11 @@ Sistema completo de generación de facturas profesionales con datos sintéticos.
 
 Este proyecto implementa un generador de facturas completo con los siguientes componentes:
 
-### 🔧 Backend API (FastAPI)
+### Backend API (FastAPI)
 - **Endpoint**: `GET /facturas/v1/{numero_factura}`
 - **Tecnología**: FastAPI + Faker + Pydantic
 - **Puerto**: 8000
-- **Funcionalidad**: Genera datos sintéticos realistas para facturas españolas
+- **Funcionalidad**: Genera datos sintéticos realistas para facturas colombianas
 
 ### Frontend Web (Flask)
 - **Tecnología**: Flask + Tailwind CSS + JavaScript
@@ -65,13 +65,17 @@ lpa2-taller2/
 
 
 
-### 📋 Prerrequisitos
+```
+
+## Inicio Rápido
+
+### Prerrequisitos
 
 - **Docker** (v20.10+)
 - **Docker Compose** (v2.0+)
 - **Git**
 
-### 🔧 Solución de Problemas Comunes
+### Solución de Problemas Comunes
 
 #### Error "docker-compose command not found" en WSL 2
 
@@ -243,7 +247,7 @@ ports:
 - `INVOICE-2024-OCT-001` - Formato detallado
 - `TEST-12345` - Para pruebas
 
-## 🐳 Comandos Docker Útiles
+## Comandos Docker Útiles
 
 ```bash
 ```bash

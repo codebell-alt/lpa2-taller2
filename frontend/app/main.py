@@ -111,8 +111,8 @@ def generar_pdf():
                 [
                     item["descripcion"],
                     str(item["cantidad"]),
-                    f"€{item['precio_unitario']:.2f}",
-                    f"€{item['subtotal']:.2f}",
+                    f"${item['precio_unitario']:,.2f} COP",
+                    f"${item['subtotal']:,.2f} COP",
                 ]
             )
 
@@ -136,9 +136,9 @@ def generar_pdf():
 
         # Totales
         totales_data = [
-            ["Subtotal:", f"€{factura['subtotal']:.2f}"],
-            ["IVA (21%):", f"€{factura['iva']:.2f}"],
-            ["TOTAL:", f"€{factura['total']:.2f}"],
+            ["Subtotal:", f"${factura['subtotal']:,.2f} COP"],
+            ["IVA (19%):", f"${factura['iva']:,.2f} COP"],
+            ["TOTAL:", f"${factura['total']:,.2f} COP"],
         ]
 
         totales_table = Table(totales_data, colWidths=[100, 80])

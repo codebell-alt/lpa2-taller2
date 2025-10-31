@@ -44,9 +44,28 @@ async def health_check():
 @app.get("/facturas/v1/{numero_factura}", response_model=Factura)
 async def obtener_factura(numero_factura: str):
     """
-    Genera una factura sintética usando Faker
+    Genera una factura sintética usando Faker con datos en español y pesos colombianos
     """
     try:
+        # Lista de productos/servicios en español
+        productos_servicios = [
+            "Consultoría empresarial",
+            "Desarrollo de software a medida",
+            "Mantenimiento de equipos informáticos",
+            "Capacitación en tecnología",
+            "Auditoría de sistemas",
+            "Instalación de redes",
+            "Soporte técnico especializado",
+            "Diseño de páginas web",
+            "Gestión de bases de datos",
+            "Servicios de hosting",
+            "Licencias de software",
+            "Equipos de cómputo",
+            "Impresoras multifuncionales",
+            "Servicios de nube",
+            "Ciberseguridad empresarial"
+        ]
+        
         # Generar items aleatorios
         items = []
         num_items = fake.random_int(min=1, max=5)
@@ -54,21 +73,22 @@ async def obtener_factura(numero_factura: str):
 
         for _ in range(num_items):
             cantidad = fake.random_int(min=1, max=10)
-            precio_unitario = round(fake.random.uniform(10.0, 500.0), 2)
+            # Precios en pesos colombianos (rangos más altos)
+            precio_unitario = round(fake.random.uniform(50000.0, 2500000.0), 2)
             item_subtotal = round(cantidad * precio_unitario, 2)
             subtotal += item_subtotal
 
             items.append(
                 ItemFactura(
-                    descripcion=fake.catch_phrase(),
+                    descripcion=fake.random.choice(productos_servicios),
                     cantidad=cantidad,
                     precio_unitario=precio_unitario,
                     subtotal=item_subtotal,
                 )
             )
 
-        # Calcular totales
-        iva = round(subtotal * 0.21, 2)  # IVA 21%
+        # Calcular totales (IVA colombiano 19%)
+        iva = round(subtotal * 0.19, 2)  # IVA 19% Colombia
         total = round(subtotal + iva, 2)
 
         # Crear factura

@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <tr class="border-b border-gray-200">
                 <td class="py-2">${item.descripcion}</td>
                 <td class="py-2 text-center">${item.cantidad}</td>
-                <td class="py-2 text-right">€${item.precio_unitario.toFixed(2)}</td>
-                <td class="py-2 text-right font-medium">€${item.subtotal.toFixed(2)}</td>
+                <td class="py-2 text-right">$${item.precio_unitario.toLocaleString('es-CO')} COP</td>
+                <td class="py-2 text-right font-medium">$${item.subtotal.toLocaleString('es-CO')} COP</td>
             </tr>
         `).join('');
 
@@ -104,15 +104,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="w-64 space-y-2">
                             <div class="flex justify-between">
                                 <span>Subtotal:</span>
-                                <span>€${factura.subtotal.toFixed(2)}</span>
+                                <span>$${factura.subtotal.toLocaleString('es-CO')} COP</span>
                             </div>
                             <div class="flex justify-between">
-                                <span>IVA (21%):</span>
-                                <span>€${factura.iva.toFixed(2)}</span>
+                                <span>IVA (19%):</span>
+                                <span>$${factura.iva.toLocaleString('es-CO')} COP</span>
                             </div>
                             <div class="flex justify-between font-bold text-lg border-t pt-2">
                                 <span>TOTAL:</span>
-                                <span>€${factura.total.toFixed(2)}</span>
+                                <span>$${factura.total.toLocaleString('es-CO')} COP</span>
                             </div>
                         </div>
                     </div>

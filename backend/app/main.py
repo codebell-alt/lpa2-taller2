@@ -1,54 +1,98 @@
-from fastapi import FastAPI
+from datetime import date, datetime
+from typing import List
+
+import uvicorn
 from faker import Faker
-import random
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-app = FastAPI(title="API de Facturas Fake", version="1.0")
+app = FastAPI(title="Generador de Facturas API", version="1.0.0")
+fake = Faker("es_ES")  # Faker en español
 
-fake = Faker("es_ES")
 
-@app.get("/facturas/v1/{numero_factura}")
-def get_factura(numero_factura: str):
-    # Generar datos falsos para empresa y cliente
-    empresa = {
-        "nombre": fake.company(),
-        "direccion": fake.address(),
-        "telefono": fake.phone_number(),
-        "email": fake.company_email()
-    }
+class ItemFactura(BaseModel):
+    descripcion: str
+    cantidad: int
+    precio_unitario: float
+    subtotal: float
 
-    cliente = {
-        "nombre": fake.company(),
-        "direccion": fake.address(),
-        "telefono": fake.phone_number()
-    }
 
-    # Generar entre 1 y 5 ítems de detalle
-    detalle = []
-    for _ in range(random.randint(1, 5)):
-        cantidad = random.randint(1, 10)
-        precio_unitario = round(random.uniform(50, 500), 2)
-        total = round(cantidad * precio_unitario, 2)
-        detalle.append({
-            "descripcion": fake.catch_phrase(),
-            "cantidad": cantidad,
-            "precio_unitario": precio_unitario,
-            "total": total
-        })
+class Factura(BaseModel):
+    numero_factura: str
+    fecha_emision: date
+    cliente_nombre: str
+    cliente_email: str
+    cliente_telefono: str
+    cliente_direccion: str
+    cliente_ciudad: str
+    items: List[ItemFactura]
+    subtotal: float
+    iva: float
+    total: float
 
-    subtotal = round(sum(item["total"] for item in detalle), 2)
-    impuesto = round(subtotal * 0.21, 2)  # IVA 21%
-    total = round(subtotal + impuesto, 2)
 
-    factura = {
-        "numero_factura": numero_factura,
-        "fecha_emision": str(fake.date_between(start_date="-1y", end_date="today")),
-        "empresa": empresa,
-        "cliente": cliente,
-        "detalle": detalle,
-        "subtotal": subtotal,
-        "impuesto": impuesto,
-        "total": total
-    }
+@app.get("/")
+async def root():
+    return {"message": "API Generador de Facturas v1.0"}
 
-    return factura
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "timestamp": datetime.now()}
+
+
+@app.get("/facturas/v1/{numero_factura}", response_model=Factura)
+async def obtener_factura(numero_factura: str):
+    """
+    Genera una factura sintética usando Faker
+    """
+    try:
+        # Generar items aleatorios
+        items = []
+        num_items = fake.random_int(min=1, max=5)
+        subtotal = 0.0
+
+        for _ in range(num_items):
+            cantidad = fake.random_int(min=1, max=10)
+            precio_unitario = round(fake.random.uniform(10.0, 500.0), 2)
+            item_subtotal = round(cantidad * precio_unitario, 2)
+            subtotal += item_subtotal
+
+            items.append(
+                ItemFactura(
+                    descripcion=fake.catch_phrase(),
+                    cantidad=cantidad,
+                    precio_unitario=precio_unitario,
+                    subtotal=item_subtotal,
+                )
+            )
+
+        # Calcular totales
+        iva = round(subtotal * 0.21, 2)  # IVA 21%
+        total = round(subtotal + iva, 2)
+
+        # Crear factura
+        factura = Factura(
+            numero_factura=numero_factura,
+            fecha_emision=fake.date_between(start_date="-30d", end_date="today"),
+            cliente_nombre=fake.name(),
+            cliente_email=fake.email(),
+            cliente_telefono=fake.phone_number(),
+            cliente_direccion=fake.address(),
+            cliente_ciudad=fake.city(),
+            items=items,
+            subtotal=subtotal,
+            iva=iva,
+            total=total,
+        )
+
+        return factura
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error generando factura: {str(e)}"
+        )
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

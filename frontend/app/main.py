@@ -1,61 +1,178 @@
-from flask import Flask, render_template, request, send_file, abort
-import requests
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import mm
-from io import BytesIO
 import os
+from io import BytesIO
+
+import requests
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 app = Flask(__name__)
-BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:8000')
+app.secret_key = "dev-secret-key"  # Cambiar en producción
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    """Página principal con formulario"""
+    return render_template("index.html")
 
-@app.route('/generar-pdf', methods=['POST'])
-def generar_pdf():
+
+@app.route("/api/factura/<numero_factura>")
+def obtener_factura(numero_factura):
+    """Endpoint para obtener datos de factura (para AJAX)"""
     try:
-        id_factura = request.form['id_factura']
-        response = requests.get(f'{BACKEND_URL}/facturas/v1/{id_factura}')
-        
+        response = requests.get(f"{BACKEND_URL}/facturas/v1/{numero_factura}")
+
         if response.status_code != 200:
-            abort(404, description="Factura no encontrada")
-            
+            return jsonify({"error": "Factura no encontrada"}), 404
+
+        return response.json()
+
+    except requests.exceptions.ConnectionError:
+        return jsonify({"error": "Error de conexión con el servidor"}), 503
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/generar-pdf", methods=["POST"])
+def generar_pdf():
+    """Genera PDF de la factura"""
+    try:
+        numero_factura = request.form["numero_factura"]
+        response = requests.get(f"{BACKEND_URL}/facturas/v1/{numero_factura}")
+
+        if response.status_code != 200:
+            flash("Factura no encontrada", "error")
+            return redirect(url_for("index"))
+
         factura = response.json()
-        
-        # TODO: Crear buffer y doc para la creación del PDF
-        
 
-        # TODO: Adicionar el Título, ID
+        # Crear buffer para PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        elements = []
 
-        
-        # TODO: Agregar Información de la Empresa
+        # Estilos
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "CustomTitle",
+            parent=styles["Heading1"],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1,  # Centro
+        )
 
+        # Título
+        titulo = Paragraph(f"FACTURA {factura['numero_factura']}", title_style)
+        elements.append(titulo)
+        elements.append(Spacer(1, 20))
 
-        # TODO: Agregar Información del Cliente
+        # Información de la factura
+        info_data = [
+            ["Fecha:", factura["fecha_emision"]],
+            ["Cliente:", factura["cliente_nombre"]],
+            ["Email:", factura["cliente_email"]],
+            ["Teléfono:", factura["cliente_telefono"]],
+            ["Dirección:", factura["cliente_direccion"]],
+            ["Ciudad:", factura["cliente_ciudad"]],
+        ]
 
+        info_table = Table(info_data)
+        info_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, -1), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (0, -1), colors.whitesmoke),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ]
+            )
+        )
+        elements.append(info_table)
+        elements.append(Spacer(1, 30))
 
-        # TODO: Adicionar el Detalle de la Factura: cantidad, descripción, precio unitario y total
+        # Detalle de items
+        detalle_data = [["Descripción", "Cantidad", "Precio Unit.", "Subtotal"]]
+        for item in factura["items"]:
+            detalle_data.append(
+                [
+                    item["descripcion"],
+                    str(item["cantidad"]),
+                    f"€{item['precio_unitario']:.2f}",
+                    f"€{item['subtotal']:.2f}",
+                ]
+            )
 
+        detalle_table = Table(detalle_data)
+        detalle_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+        )
+        elements.append(detalle_table)
+        elements.append(Spacer(1, 30))
 
-        # TODO: Adicionar Subtotal, impuesto y Total
+        # Totales
+        totales_data = [
+            ["Subtotal:", f"€{factura['subtotal']:.2f}"],
+            ["IVA (21%):", f"€{factura['iva']:.2f}"],
+            ["TOTAL:", f"€{factura['total']:.2f}"],
+        ]
 
+        totales_table = Table(totales_data, colWidths=[100, 80])
+        totales_table.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (-1, -1), "RIGHT"),
+                    ("FONTNAME", (0, 0), (-1, 1), "Helvetica"),
+                    ("FONTNAME", (0, 2), (-1, 2), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 12),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ]
+            )
+        )
+        elements.append(totales_table)
 
-        # Generar el doc y limpiar el buffer
+        # Generar PDF
         doc.build(elements)
         buffer.seek(0)
-        
-        # TODO: Retornar a la página el PDF para visualizar y descargar
 
-        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"factura_{numero_factura}.pdf",
+            mimetype="application/pdf",
+        )
+
     except requests.exceptions.ConnectionError:
-        abort(503, description="Error de conexión con el servidor")
+        flash("Error de conexión con el servidor", "error")
+        return redirect(url_for("index"))
     except Exception as e:
-        abort(500, description=str(e))
+        flash(f"Error generando PDF: {str(e)}", "error")
+        return redirect(url_for("index"))
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000, debug=True)
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=3000, debug=True)

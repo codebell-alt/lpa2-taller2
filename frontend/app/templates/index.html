@@ -1,31 +1,201 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Facturas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#1e40af',
+                        'secondary': '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <h1>Generador de Facturas PDF</h1>
-        <form method="POST" action="/generar-pdf">
-            <div class="form-group">
-                <label for="id_factura">ID de Factura:</label>
-                <input type="text" id="id_factura" name="id_factura" required>
-            </div>
-            <button type="submit">Generar PDF</button>
-        </form>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
+<body class="h-full bg-gradient-to-br from-slate-50 to-blue-50">
+    <div class="min-h-full">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-invoice-dollar text-3xl text-primary mr-3"></i>
+                        <h1 class="text-2xl font-bold text-gray-900">Generador de Facturas</h1>
+                    </div>
+                    <div class="text-sm text-secondary">
+                        <i class="fas fa-calendar mr-1"></i>
+                        <span id="current-date"></span>
+                    </div>
                 </div>
-            {% endif %}
-        {% endwith %}
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <!-- Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-8">
+                        {% for category, message in messages %}
+                            <div class="rounded-md p-4 mb-4 {% if category == 'error' %}bg-red-50 border border-red-200{% else %}bg-green-50 border border-green-200{% endif %}">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        {% if category == 'error' %}
+                                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                                        {% else %}
+                                            <i class="fas fa-check-circle text-green-400"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm {% if category == 'error' %}text-red-800{% else %}text-green-800{% endif %}">
+                                            {{ message }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Main Card -->
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-primary to-blue-600 px-8 py-6">
+                    <h2 class="text-2xl font-semibold text-white flex items-center">
+                        <i class="fas fa-magic mr-3"></i>
+                        Generar Nueva Factura
+                    </h2>
+                    <p class="text-blue-100 mt-2">Ingresa el número de factura para generar datos sintéticos</p>
+                </div>
+
+                <!-- Card Body -->
+                <div class="p-8">
+                    <!-- Form -->
+                    <form id="facturaForm" method="POST" action="/generar-pdf" class="space-y-6">
+                        <div>
+                            <label for="numero_factura" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-hashtag mr-2 text-secondary"></i>
+                                Número de Factura
+                            </label>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="numero_factura"
+                                    name="numero_factura"
+                                    required
+                                    placeholder="ej: F001-001, FAC-2024-001"
+                                    class="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
+                                >
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <i class="fas fa-receipt text-gray-400"></i>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Puedes usar cualquier formato: letras, números y guiones
+                            </p>
+                        </div>
+
+                        <!-- Preview Button -->
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button
+                                type="button"
+                                id="previewBtn"
+                                class="flex-1 bg-secondary hover:bg-slate-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                            >
+                                <i class="fas fa-eye mr-2"></i>
+                                Vista Previa
+                            </button>
+                            <button
+                                type="submit"
+                                class="flex-1 bg-primary hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center shadow-lg"
+                            >
+                                <i class="fas fa-download mr-2"></i>
+                                Generar PDF
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Preview Section -->
+                    <div id="previewSection" class="hidden mt-8 pt-8 border-t border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-eye mr-2 text-primary"></i>
+                            Vista Previa de la Factura
+                        </h3>
+                        <div id="previewContent" class="bg-gray-50 rounded-lg p-6">
+                            <!-- Contenido dinámico se carga aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Datos Sintéticos</h3>
+                    <p class="text-sm text-gray-600">Genera automáticamente nombres, direcciones y productos realistas usando Faker</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2">PDF Profesional</h3>
+                    <p class="text-sm text-gray-600">Genera PDFs con formato profesional listos para imprimir o enviar</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Cálculos Automáticos</h3>
+                    <p class="text-sm text-gray-600">Calcula automáticamente subtotales, IVA y totales según la legislación española</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center text-sm text-gray-500">
+                    <p>© 2025 Generador de Facturas - Desarrollado con FastAPI y Flask</p>
+                    <div class="mt-2 flex justify-center space-x-4">
+                        <span class="inline-flex items-center">
+                            <i class="fab fa-python text-blue-500 mr-1"></i>
+                            Python
+                        </span>
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-rocket text-green-500 mr-1"></i>
+                            FastAPI
+                        </span>
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-flask text-red-500 mr-1"></i>
+                            Flask
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Mostrar fecha actual
+        document.getElementById('current-date').textContent =
+            new Date().toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+    </script>
 </body>
 </html>

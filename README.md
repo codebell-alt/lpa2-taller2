@@ -1,116 +1,188 @@
-# Generador de Facturas
+# 🧾 Generador de Facturas
 
-Sistema completo de generación de facturas, utilizando [FastAPI](https://fastapi.tiangolo.com/) para el backend que genera datos sintéticos con [Faker](https://faker.readthedocs.io/), y proporciona un frontend web con [Flask](https://flask.palletsprojects.com/) para generar PDFs de las facturas con [ReportLab](https://docs.reportlab.com/reportlab/userguide/ch1_intro/).
+Sistema completo de generación de facturas profesionales con datos sintéticos. Utiliza **FastAPI** para el backend con datos generados por **Faker**, y un frontend moderno en **Flask** con **Tailwind CSS** que genera PDFs de alta calidad con **ReportLab**.
 
 ## Autor
 
-- Nombre del Estudiante - @perfil_de_github
+- **Isabella Ramirez Franco** - [@codebell-alt](https://github.com/codebell-alt)
 
 ## Descripción del Proyecto
 
-Este proyecto consta de dos servicios principales:
+Este proyecto implementa un generador de facturas completo con los siguientes componentes:
 
-- **Backend API**: FastAPI que genera datos sintéticos de facturas utilizando Faker
-- **Frontend Web**: Aplicación web que consume el API y genera PDFs descargables de las facturas
+### 🔧 Backend API (FastAPI)
+- **Endpoint**: `GET /facturas/v1/{numero_factura}`
+- **Tecnología**: FastAPI + Faker + Pydantic
+- **Puerto**: 8000
+- **Funcionalidad**: Genera datos sintéticos realistas para facturas españolas
+
+### Frontend Web (Flask)
+- **Tecnología**: Flask + Tailwind CSS + JavaScript
+- **Puerto**: 3000
+- **Funcionalidad**: Interfaz moderna que consume la API y genera PDFs
 
 ## Arquitectura
 
 ```
-┌────────────────┐          ┌───────────────┐
-│  Frontend Web  │ ───────> │  Backend API  │
-│  puerto 3000   │   HTTP   │  puerto 8000  │
-│  Flask + RLab  │ <─────── │  FastAPI      │
-└────────────────┘          └───────────────┘
+┌─────────────────────────┐    HTTP    ┌──────────────────────┐
+│    Frontend Flask      │ ────────> │   Backend FastAPI    │
+│   Puerto: 3000         │           │    Puerto: 8000      │
+│ ┌─────────────────────┐ │           │ ┌──────────────────┐ │
+│ │   Tailwind CSS      │ │           │ │      Faker       │ │
+│ │   JavaScript        │ │           │ │    Pydantic      │ │
+│ │   ReportLab PDF     │ │           │ │   Datos Sint.    │ │
+│ └─────────────────────┘ │           │ └──────────────────┘ │
+└─────────────────────────┘           └──────────────────────┘
 ```
 
 ## Estructura del Proyecto
 
 ```
-factura-generator/
+lpa2-taller2/
 ├── docker-compose.yml          # Orquestación de servicios
-├── README.md                   # Este archivo
-├── backend/                    # Servicio API
-│   ├── Dockerfile
+├── README.md                   # Esta documentación
+├── .pre-commit-config.yaml     # Configuración de pre-commit hooks
+├── backend/                    # Servicio API FastAPI
+│   ├── Dockerfile             # Contenedor del backend
 │   └── app/
-│       ├── main.py            # API FastAPI
-│       └── requirements.txt
-└── frontend/                   # Servicio Frontend
-    ├── Dockerfile
+│       ├── main.py            # Aplicación FastAPI principal
+│       ├── requirements.txt   # Dependencias Python backend
+│       └── tests/
+│           └── test_facturas.py # Tests pytest para API
+└── frontend/                   # Servicio Web Flask
+    ├── Dockerfile             # Contenedor del frontend
     └── app/
-        ├── main.py            # Servidor web Flask
-        ├── requirements.txt
-        ├── static/            # Archivos estáticos
+        ├── main.py            # Aplicación Flask principal
+        ├── requirements.txt   # Dependencias Python frontend
+        ├── static/
         │   ├── css/
-        │   │    └── style.css
+        │   │   └── style.css  # Estilos CSS personalizados
         │   └── js/
-        │        └── app.js
-        └── templates/         # Plantillas HTML
-            └── index.html
+        │       └── app.js     # JavaScript para interactividad
+        └── templates/
+            └── index.html     # Template HTML con Tailwind
 ```
 
-## Inicio Rápido
 
-### Prerrequisitos
 
-- Docker
-- Docker Compose
+### 📋 Prerrequisitos
 
-### Instalación y Ejecución
+- **Docker** (v20.10+)
+- **Docker Compose** (v2.0+)
+- **Git**
+
+### 🔧 Solución de Problemas Comunes
+
+#### Error "docker-compose command not found" en WSL 2
+
+Si obtienes el error:
+```
+The command 'docker-compose' could not be found in this WSL 2 distro.
+```
+
+**Solución 1** (Recomendada): Usar Docker Compose v2
+```bash
+# Usar 'docker compose' (sin guión) en lugar de 'docker-compose'
+docker compose up --build -d
+```
+
+**Solución 2**: Activar integración WSL en Docker Desktop
+1. Abrir Docker Desktop → Settings → Resources → WSL Integration
+2. Activar "Enable integration with my default WSL distro"
+3. Seleccionar tu distribución WSL específica
+4. Apply & Restart
+
 
 1. **Clonar el repositorio**
 
 ```bash
-git clone https://github.com/UR-CC/lpa2-taller2.git
+git clone https://github.com/codebell-alt/lpa2-taller2.git
 cd lpa2-taller2
 ```
 
 2. **Construir y levantar los servicios**
 
 ```bash
-docker-compose up --build
+# Construir e iniciar ambos servicios (Docker Compose v2)
+docker compose up --build
+
+# O en modo background (recomendado)
+docker compose up --build -d
+
+# Si tienes Docker Compose v1 (legacy), usar:
+# docker-compose up --build -d
 ```
 
-3. **Acceder a la aplicación**
+> **Nota**: Este proyecto usa **Docker Compose v2** (`docker compose` sin guión). Si estás en WSL 2, asegúrate de tener la integración de Docker Desktop activada.
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000`
-- Documentación API: `http://localhost:8000/docs`
+3. **Verificar que los servicios estén funcionando**
 
-## Backend (API de Facturas)
+```bash
+# Ver logs
+docker compose logs
 
-El backend expone un *endpoint* que genera facturas sintéticas:
+# Ver estado de containers
+docker compose ps
+```
 
-**Endpoint:** `GET /facturas/v1/{numero_factura}`
+## Acceso a los Servicios
+
+- **Frontend Web**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Documentación API**: http://localhost:8000/docs (Swagger UI)
+- **Health Check**: http://localhost:8000/health
+
+## Uso del Sistema
+
+### Backend API (FastAPI)
+
+El backend expone un endpoint REST que genera facturas sintéticas con datos realistas:
+
+**Endpoint Principal:** `GET /facturas/v1/{numero_factura}`
 
 **Ejemplo de uso:**
 
 ```bash
-curl http://localhost:8000/facturas/v1/FAC-2025-001
+# Generar factura con número personalizado
+curl http://localhost:8000/facturas/v1/F001-2024-001
+
+# Verificar salud del servicio
+curl http://localhost:8000/health
 ```
 
-**Ejemplo de la Respuesta:**
+**Ejemplo de respuesta JSON:**
 
 ```json
 {
-  "numero_factura": "FAC-2025-001",
-  "fecha_emision": "2025-08-15",
-  "empresa": {
-    "nombre": "Tech Solutions S.L.",
-    "direccion": "Calle Mayor 123, Madrid",
-    "telefono": "+34 912 345 678",
-    "email": "contacto@techsolutions.es"
-  },
-  "cliente": {
-    "nombre": "Industrias López",
-    "direccion": "Av. Libertad 456, Barcelona",
-    "telefono": "+34 933 456 789"
-  },
-  "detalle": [...],
-  "subtotal": 1250.00,
-  "impuesto": 262.50,
-  "total": 1512.50
+  "numero_factura": "F001-2024-001",
+  "fecha_emision": "2024-10-15",
+  "cliente_nombre": "María García Rodríguez",
+  "cliente_email": "maria.garcia@email.com",
+  "cliente_telefono": "+34 612 345 678",
+  "cliente_direccion": "Calle de Alcalá 123, 28009 Madrid",
+  "cliente_ciudad": "Madrid",
+  "items": [
+    {
+      "descripcion": "Servicio de consultoría empresarial",
+      "cantidad": 2,
+      "precio_unitario": 350.00,
+      "subtotal": 700.00
+    }
+  ],
+  "subtotal": 700.00,
+  "iva": 147.00,
+  "total": 847.00
 }
 ```
+
+### Frontend Web (Flask)
+
+La interfaz web ofrece:
+
+1. **Formulario intuitivo** - Ingresa cualquier número de factura
+2. **Vista previa** - Visualiza los datos antes de generar el PDF
+3. **Descarga PDF** - Genera y descarga facturas profesionales
+4. **Diseño responsive** - Funciona en desktop y móvil
 
 ## Frontend (Generador de PDF)
 
@@ -131,7 +203,7 @@ El frontend proporciona una interfaz web donde:
 
 - Editar `frontend/app/main.py` para crear la lógica de la consulta del API y generación del PDF
 - Editar `frontend/app/templates/index.html` para modificar el diseño de la interfaz Web
-- Editar `frontend/app/static/css/style.css` para modificar los estilos 
+- Editar `frontend/app/static/css/style.css` para modificar los estilos
 - Editar `frontend/app/static/js/app.js` para ajustar lógica de la interfaz, si se requiere
 
 ## Configuración Avanzada
@@ -156,67 +228,135 @@ ports:
   - "9000:8000"  # Backend en puerto 9000
 ```
 
-## Uso de la Aplicación
+## Uso del Sistema
 
-1. **Abrir el navegador** en `http://localhost:3000`
-2. **Ingresar número de factura** (ej: FAC-2025-001, INV-2024-123, etc.)
-3. **Hacer clic en "Generar Factura"**
-4. **Ver la vista previa** de la factura
-5. **Descargar PDF** haciendo clic en "Descargar PDF"
+### Proceso Completo
+1. **Abrir navegador**: http://localhost:3000
+2. **Ingresar número de factura**: Cualquier formato (F001-001, FAC-2024-123, etc.)
+3. **Vista previa**: Clic en "Vista Previa" para ver datos generados
+4. **Generar PDF**: Clic en "Generar PDF" para descargar
+5. **Descargar**: El navegador descarga automáticamente el PDF
 
-## Comandos Docker Útiles
+### Ejemplos de Números de Factura
+- `F001-001` - Formato simple
+- `FAC-2024-001` - Con año
+- `INVOICE-2024-OCT-001` - Formato detallado
+- `TEST-12345` - Para pruebas
+
+## 🐳 Comandos Docker Útiles
 
 ```bash
-# Levantar servicios
-docker-compose up
+```bash
+# Construir y levantar servicios
+docker compose up --build -d
 
-# Levantar servicios en segundo plano
-docker-compose up -d
+# Ver logs en tiempo real
+docker compose logs -f
 
-# Reconstruir imágenes
-docker-compose up --build
+# Ver logs de servicio específico
+docker compose logs -f backend
+docker compose logs -f frontend
 
-# Ver logs
-docker-compose logs -f
-
-# Ver logs de un servicio específico
-docker-compose logs -f backend
-docker-compose logs -f frontend
+# Reiniciar servicios
+docker compose restart
 
 # Detener servicios
-docker-compose down
+docker compose down
 
-# Detener y eliminar volúmenes
-docker-compose down -v
+# Limpiar todo (containers, networks, volúmenes)
+docker compose down -v --rmi all
 
-# Reiniciar un servicio específico
-docker-compose restart backend
+# Ver estado de containers
+docker compose ps
+
+# Acceder a shell de container
+docker compose exec backend bash
+docker compose exec frontend bash
+```
 ```
 
-## 🧪 Testing
+## Testing y Validación
 
-### Probar el Backend
+### Tests Automatizados (Pytest)
 
 ```bash
-# Endpoint de salud
-curl http://localhost:8000/
+# Ejecutar todos los tests
+docker compose exec backend python -m pytest tests/ -v
 
-# Generar factura
-curl http://localhost:8000/facturas/v1/TEST-001 | jq
+# Tests con coverage detallado
+docker compose exec backend python -m pytest tests/ --cov=. --cov-report=html
 
-# Usando httpie (más legible)
-http http://localhost:8000/facturas/v1/TEST-001
+# Tests específicos
+docker compose exec backend python -m pytest tests/test_facturas.py::test_obtener_factura_basico -v
 ```
 
-### Probar el Frontend
+### Pruebas Manuales de API
 
-1. Navegar a `http://localhost:3000`
-2. Probar diferentes números de factura
-3. Verificar generación correcta de PDFs
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Generar factura simple
+curl http://localhost:8000/facturas/v1/TEST-001
+
+# Con formato JSON legible
+curl http://localhost:8000/facturas/v1/TEST-001 | python -m json.tool
+
+# Múltiples facturas
+curl http://localhost:8000/facturas/v1/F{001..005}-2024
+```
+
+### Validación Frontend
+
+1. **Funcionalidad básica**: Navegación y formularios
+2. **Vista previa AJAX**: Carga de datos sin recargar página
+3. **Generación PDF**: Descarga correcta de archivos
+4. **Responsive**: Prueba en diferentes tamaños de pantalla
+5. **Manejo de errores**: Números de factura inválidos
+
+## Tecnologías Utilizadas
+
+### Backend
+- **FastAPI** 0.104.1 - Framework web moderno y rápido
+- **Pydantic** 2.4.2 - Validación de datos con tipos
+- **Faker** 19.12.0 - Generación de datos sintéticos
+- **Uvicorn** 0.24.0 - Servidor ASGI de alto rendimiento
+- **Pytest** 7.4.3 - Framework de testing
+
+### Frontend
+- **Flask** 3.0.0 - Framework web minimalista
+- **ReportLab** 4.0.7 - Generación de PDFs profesionales
+- **Requests** 2.31.0 - Cliente HTTP para consumir API
+- **Tailwind CSS** - Framework CSS utilitario moderno
+- **Font Awesome** - Iconografía profesional
+
+### DevOps & Tools
+- **Docker** & **Docker Compose** - Containerización
+- **Pre-commit hooks** - Calidad de código automatizada
+- **Black** - Formateador de código Python
+- **Ruff** - Linter Python ultrarrápido
+- **isort** - Ordenamiento de imports
+
+## Referencias y Documentación
+
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Flask Documentation](https://flask.palletsprojects.com/)
+- [ReportLab User Guide](https://docs.reportlab.com/)
+- [Faker Documentation](https://faker.readthedocs.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+## Contribución
+
+1. Fork el proyecto
+2. Crear una rama para la feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit los cambios (`git commit -am 'Añadir nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Crear un Pull Request
+
 
 ## API Documentation
 
 La documentación interactiva de Swagger está disponible en:
 - `http://localhost:8000/docs` (Swagger UI)
 - `http://localhost:8000/redoc` (ReDoc)
-
